@@ -4,71 +4,49 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase que representa un nivel del juego Snake
+ * Contiene solo la información esencial: dimensiones, obstáculos y configuración básica
+ */
 public class Level {
-
-    private int id; //
-    private int[] dimensions;
-    private String[] obstacles;
-    private int maxPlayers;
-    private int difficulty;
-    private int gameSpeed;
-    private double fruitSpawnRate;
-    private List<Point> obstaclePositions;
+    private int id;
+    private int width;
+    private int height;
+    private int gameSpeed; // Velocidad del juego en ms
+    private List<Point> obstacles; // Lista de obstáculos
 
     // Constructor
-    public Level() {
-        this.obstaclePositions = new ArrayList<>();
-    }
-
-    // Constructor completo
-    public Level(int id, int[] dimensions, String[] obstacles,
-                 int maxPlayers, int difficulty, int gameSpeed, double fruitSpawnRate) {
+    public Level(int id, int width, int height, int gameSpeed) {
         this.id = id;
-        this.dimensions = dimensions;
-        this.obstacles = obstacles;
-        this.maxPlayers = maxPlayers;
-        this.difficulty = difficulty;
+        this.width = width;
+        this.height = height;
         this.gameSpeed = gameSpeed;
-        this.fruitSpawnRate = fruitSpawnRate;
-        this.obstaclePositions = new ArrayList<>();
+        this.obstacles = new ArrayList<>();
     }
 
-    // Getters y Setters
+    // Getters
     public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-    public int[] getDimensions() { return dimensions; }
-    public void setDimensions(int[] dimensions) { this.dimensions = dimensions; }
-
-    public int getMaxPlayers() { return maxPlayers; }
-    public void setMaxPlayers(int maxPlayers) { this.maxPlayers = maxPlayers; }
-
-    public int getDifficulty() { return difficulty; }
-    public void setDifficulty(int difficulty) { this.difficulty = difficulty; }
-
-    public String[] getObstacles() { return obstacles; }
-    public void setObstacles(String[] obstacles) { this.obstacles = obstacles; }
-
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
     public int getGameSpeed() { return gameSpeed; }
-    public void setGameSpeed(int gameSpeed) { this.gameSpeed = gameSpeed; }
+    public List<Point> getObstacles() { return obstacles; }
 
-    public double getFruitSpawnRate() { return fruitSpawnRate; }
-    public void setFruitSpawnRate(double fruitSpawnRate) { this.fruitSpawnRate = fruitSpawnRate; }
-
-    public List<Point> getObstaclePositions() { return obstaclePositions; }
-    public void setObstaclePositions(List<Point> obstaclePositions) { this.obstaclePositions = obstaclePositions; }
-
-    // Métodos utilitarios
+    // Métodos para manejar obstáculos
     public void addObstacle(int x, int y) {
-        obstaclePositions.add(new Point(x, y));
+        obstacles.add(new Point(x, y));
     }
 
     public boolean hasObstacleAt(int x, int y) {
-        return obstaclePositions.contains(new Point(x, y));
+        return obstacles.contains(new Point(x, y));
+    }
+
+    // Verificar si una posición está dentro del nivel
+    public boolean isInsideBounds(int x, int y) {
+        return x >= 0 && x < width && y >= 0 && y < height;
     }
 
     @Override
     public String toString() {
-        return "Level " + id + " (Difficulty: " + difficulty + ")";
+        return "Nivel " + id + " (" + width + "x" + height + ", " + obstacles.size() + " obstáculos)";
     }
 }
