@@ -23,6 +23,9 @@ public class GameServer {
     // Thread pool para manejar clientes
     private ExecutorService clientThreadPool;
 
+    // Monitor de rendimiento
+    private PerformanceMonitor performanceMonitor;
+
     // Gestores de componentes
     private ServerMessageBroadcaster broadcaster;
     private PlayerManager playerManager;
@@ -36,6 +39,7 @@ public class GameServer {
         this.clientThreadPool = Executors.newCachedThreadPool();
         this.broadcaster = new ServerMessageBroadcaster();
         this.playerManager = new PlayerManager();
+        this.performanceMonitor = new PerformanceMonitor();
     }
 
     /**
@@ -80,6 +84,9 @@ public class GameServer {
                 System.out.println("Cliente conectado: Player " + playerId +
                         " (" + connectedPlayers.get() + "/" + maxPlayers + ")");
 
+                // Actualizar métricas de rendimiento
+                performanceMonitor.updatePeakPlayers(connectedPlayers.get());
+
                 // Notificar a otros clientes sobre nuevo jugador
                 broadcaster.broadcastToOthers("PLAYER_JOINED:" + playerId, playerId);
 
@@ -96,6 +103,7 @@ public class GameServer {
      */
     public void broadcastGameState(String gameState) {
         broadcaster.broadcastToAll("STATE:" + gameState);
+        performanceMonitor.recordMessageSent("STATE:" + gameState);
     }
 
     /**
@@ -169,5 +177,9 @@ public class GameServer {
 
     public PlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    public PerformanceMonitor getPerformanceMonitor() {
+        return performanceMonitor;
     }
 }
