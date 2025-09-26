@@ -12,7 +12,7 @@ public class Constants {
     // === CONFIGURACIÓN DEL JUEGO ===
     public static final int GAME_SPEED = 100; // ms entre actualizaciones
     public static final int MAX_PLAYERS = 4;
-    public static final int MIN_PLAYERS = 2;
+    public static final int MIN_PLAYERS = 1;
     public static final int INITIAL_SNAKE_LENGTH = 3;
     public static final int POINTS_PER_FRUIT = 10;
     

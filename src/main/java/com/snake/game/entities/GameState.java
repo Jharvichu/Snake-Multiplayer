@@ -87,7 +87,7 @@ public class GameState {
         playerRanking.clear();
         playerRanking.addAll(playersInfo.keySet());
         
-        // Ordenar por puntuación descendente, luego por tiempo de supervivencia
+        // Ordenar por puntuación descendente
         playerRanking.sort((id1, id2) -> {
             Player p1 = playersInfo.get(id1);
             Player p2 = playersInfo.get(id2);
