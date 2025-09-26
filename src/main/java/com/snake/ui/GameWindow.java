@@ -53,6 +53,11 @@ public class GameWindow extends JFrame {
                 UIConstants.WINDOW_WIDTH,
                 UIConstants.GAME_PANEL_HEIGHT
         ));
+        InputHandler inputHandler = new InputHandler();
+        gamePanel.addKeyListener(inputHandler);
+        gamePanel.setFocusable(true);
+        gamePanel.requestFocusInWindow();
+
 
         // Panel de puntuaciones en la parte superior
         scorePanel = new JPanel();

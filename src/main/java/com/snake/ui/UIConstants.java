@@ -8,16 +8,16 @@ import java.awt.*;
  */
 public class UIConstants {
 
-    // Dimensiones de la ventana
-    public static final int WINDOW_WIDTH = 800;
-    public static final int WINDOW_HEIGHT = 600;
-    public static final int GAME_PANEL_HEIGHT = 500;
-    public static final int SCORE_PANEL_HEIGHT = 80;
+    // Dimensiones del tablero de juego - MÁS GRANDE
+    public static final int BOARD_WIDTH = 50;   // Era 40
+    public static final int BOARD_HEIGHT = 35;  // Era 30
+    public static final int CELL_SIZE = 18;     // Era 15
 
-    // Dimensiones del tablero de juego
-    public static final int BOARD_WIDTH = 40;
-    public static final int BOARD_HEIGHT = 30;
-    public static final int CELL_SIZE = 15;
+    // Dimensiones de la ventana - AJUSTADAS
+    public static final int WINDOW_WIDTH = 920;  // 50 × 18 + 20 padding
+    public static final int WINDOW_HEIGHT = 710; // 35 × 18 + 80 score + 50 padding
+    public static final int GAME_PANEL_HEIGHT = 630; // 35 × 18
+    public static final int SCORE_PANEL_HEIGHT = 80; // Igual
 
     // Colores base
     public static final Color BACKGROUND_COLOR = Color.BLACK;
