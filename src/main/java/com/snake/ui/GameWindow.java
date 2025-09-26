@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.UIManager;
 
 /**
  * Ventana principal del juego Snake Multijugador
@@ -166,12 +167,6 @@ public class GameWindow extends JFrame {
      */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
             GameWindow window = new GameWindow();
             window.setVisible(true);
             window.updateConnectionStatus("Modo de prueba - Sin conexión");
