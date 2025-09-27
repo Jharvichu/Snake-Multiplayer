@@ -1,11 +1,9 @@
 package main.java.com.snake.ui;
 
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.swing.UIManager;
 
 /**
  * Ventana principal del juego Snake Multijugador
@@ -14,6 +12,7 @@ import javax.swing.UIManager;
 public class GameWindow extends JFrame {
 
     private GamePanel gamePanel;
+    private ScoreboardPanel scoreboardPanel;
     private JPanel scorePanel;
     private JLabel statusLabel;
     private JLabel playersLabel;
@@ -53,20 +52,22 @@ public class GameWindow extends JFrame {
                 UIConstants.WINDOW_WIDTH,
                 UIConstants.GAME_PANEL_HEIGHT
         ));
-        InputHandler inputHandler = new InputHandler();
-        gamePanel.addKeyListener(inputHandler);
-        gamePanel.setFocusable(true);
-        gamePanel.requestFocusInWindow();
+        
+        // Panel de puntuaciones avanzado
+        scoreboardPanel = new ScoreboardPanel();
+        scoreboardPanel.setPreferredSize(new Dimension(UIConstants.SCOREBOARD_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
+        scoreboardPanel.setMinimumSize(new Dimension(UIConstants.SCOREBOARD_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
+        scoreboardPanel.setMaximumSize(new Dimension(UIConstants.SCOREBOARD_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
 
 
-        // Panel de puntuaciones en la parte superior
+        // Panel de información básica en la parte superior
         scorePanel = new JPanel();
         scorePanel.setPreferredSize(new Dimension(
                 UIConstants.WINDOW_WIDTH,
                 UIConstants.SCORE_PANEL_HEIGHT
         ));
         scorePanel.setBackground(Color.DARK_GRAY);
-        scorePanel.setBorder(BorderFactory.createTitledBorder("Puntuaciones"));
+        scorePanel.setBorder(BorderFactory.createTitledBorder("Estado del Juego"));
 
         // Labels informativos
         statusLabel = new JLabel("Conectando al servidor...");
@@ -77,7 +78,7 @@ public class GameWindow extends JFrame {
         playersLabel.setForeground(UIConstants.TEXT_COLOR);
         playersLabel.setFont(UIConstants.SCORE_FONT);
 
-        // Agregar componentes al panel de puntuaciones
+        // Agregar componentes al panel de información
         scorePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         scorePanel.add(statusLabel);
         scorePanel.add(Box.createHorizontalStrut(20));
@@ -89,8 +90,19 @@ public class GameWindow extends JFrame {
      */
     private void setupLayout() {
         setLayout(new BorderLayout());
+
+        // Panel superior
         add(scorePanel, BorderLayout.NORTH);
-        add(gamePanel, BorderLayout.CENTER);
+
+        // Panel central con juego y scoreboard
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.add(gamePanel, BorderLayout.CENTER);
+        centerPanel.add(scoreboardPanel, BorderLayout.EAST);
+
+        add(centerPanel, BorderLayout.CENTER);
+
+        // Debug: verificar que scoreboard existe
+        System.out.println("Scoreboard agregado: " + (scoreboardPanel != null));
     }
 
     /**

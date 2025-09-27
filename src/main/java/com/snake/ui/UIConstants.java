@@ -7,17 +7,22 @@ import java.awt.*;
  * @author Ariana
  */
 public class UIConstants {
+    // Calcular para llenar exactamente el espacio disponible
+    public static final int GAME_AREA_WIDTH = 900;  // Espacio disponible
+    public static final int GAME_AREA_HEIGHT = 630; // Espacio disponible
+    public static final int CELL_SIZE = 18;
+    public static final int BOARD_WIDTH = GAME_AREA_WIDTH / CELL_SIZE;   // = 50 celdas
+    public static final int BOARD_HEIGHT = GAME_AREA_HEIGHT / CELL_SIZE; // = 35 celdas
 
-    // Dimensiones del tablero de juego - MÁS GRANDE
-    public static final int BOARD_WIDTH = 50;   // Era 40
-    public static final int BOARD_HEIGHT = 35;  // Era 30
-    public static final int CELL_SIZE = 18;     // Era 15
+    // Dimensiones de la ventana
+    public static final int WINDOW_WIDTH = 1420; // Total para juego + scoreboard
+    public static final int WINDOW_HEIGHT = 710;
+    public static final int GAME_PANEL_HEIGHT = 630;
+    public static final int SCORE_PANEL_HEIGHT = 80;
 
-    // Dimensiones de la ventana - AJUSTADAS
-    public static final int WINDOW_WIDTH = 920;  // 50 × 18 + 20 padding
-    public static final int WINDOW_HEIGHT = 710; // 35 × 18 + 80 score + 50 padding
-    public static final int GAME_PANEL_HEIGHT = 630; // 35 × 18
-    public static final int SCORE_PANEL_HEIGHT = 80; // Igual
+    // Nuevas constantes para el scoreboard
+    public static final int SCOREBOARD_WIDTH = 520; // Ancho fijo para scoreboard
+
 
     // Colores base
     public static final Color BACKGROUND_COLOR = Color.BLACK;

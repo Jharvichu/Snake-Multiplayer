@@ -36,6 +36,9 @@ public class GamePanel extends JPanel implements KeyListener {
                 UIConstants.BOARD_WIDTH * UIConstants.CELL_SIZE,
                 UIConstants.BOARD_HEIGHT * UIConstants.CELL_SIZE
         ));
+
+        setPreferredSize(new Dimension(UIConstants.GAME_AREA_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
+        setMinimumSize(new Dimension(UIConstants.GAME_AREA_WIDTH, UIConstants.GAME_PANEL_HEIGHT));
     }
 
     @Override
