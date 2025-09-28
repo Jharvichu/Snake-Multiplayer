@@ -1,4 +1,3 @@
-// ========== ACTUALIZACIÓN DE LevelManager.java ==========
 package main.java.com.snake.game.levels;
 
 import java.util.ArrayList;
@@ -13,6 +12,8 @@ public class LevelManager {
     private int currentLevelId;
     private LevelObserver observer;
 
+    private static LevelManager currentInstance; // Variable estática
+
     public interface LevelObserver {
         void onLevelChanged(Level newLevel);
         void onLevelCompleted(Level completedLevel);
@@ -23,6 +24,7 @@ public class LevelManager {
         this.levels = new ArrayList<>();
         this.currentLevelId = 1;
         initializeFourLevels();
+        currentInstance = this; // Asignar instancia actual
     }
 
     /**
@@ -59,8 +61,8 @@ public class LevelManager {
         level4.setRequiredScore(200);
         level4.setMaxTime(300000); // 5 minutos
 
-        // Laberinto complejo
-        addComplexMazeObstacles(level4);
+        // Laberinto complejo con obstáculos móviles
+        addComplexMazeWithMovingObstacles(level4);
 
         levels.add(level1);
         levels.add(level2);
@@ -119,12 +121,10 @@ public class LevelManager {
     }
 
     /**
-     * Crear laberinto complejo
+     * Crear laberinto complejo CON obstáculos móviles (Nivel 4)
      */
-    private void addComplexMazeObstacles(Level level) {
-        // Laberinto más complejo con múltiples caminos
-
-        // Bordes principales
+    private void addComplexMazeWithMovingObstacles(Level level) {
+        // Bordes principales fijos
         for (int x = 3; x < 47; x++) {
             if (x % 5 != 0) { // Crear aberturas
                 level.addObstacle(x, 6);
@@ -132,7 +132,7 @@ public class LevelManager {
             }
         }
 
-        // Pasillos internos
+        // Pasillos internos fijos
         for (int section = 0; section < 4; section++) {
             int startX = 8 + section * 10;
             for (int x = startX; x < startX + 6; x++) {
@@ -141,13 +141,27 @@ public class LevelManager {
             }
         }
 
-        // Obstáculos en zigzag
+        // Obstáculos fijos en zigzag
         for (int i = 0; i < 20; i++) {
             int x = 10 + i * 2;
             int y = (i % 2 == 0) ? 16 : 18;
             if (x < 45) {
                 level.addObstacle(x, y);
             }
+        }
+
+        // OBSTÁCULOS MÓVILES - Línea horizontal que se mueve
+        for (int i = 0; i < 5; i++) {
+            int x = 15 + i * 5;
+            int y = 18;
+            level.addMovingObstacle(x, y);
+        }
+
+        // OBSTÁCULOS MÓVILES - Línea vertical que se mueve
+        for (int i = 0; i < 3; i++) {
+            int x = 10;
+            int y = 15 + i * 3;
+            level.addMovingObstacle(x, y);
         }
     }
 
@@ -218,5 +232,13 @@ public class LevelManager {
         Level current = getCurrentLevel();
         return String.format("Nivel %d: %s - Puntos requeridos: %d",
                 current.getId(), current.getName(), current.getRequiredScore());
+    }
+
+    /**
+     * Obtener la instancia actual del LevelManager
+     * @return Instancia actual del LevelManager
+     */
+    public static LevelManager getCurrentInstance() {
+        return currentInstance;
     }
 }

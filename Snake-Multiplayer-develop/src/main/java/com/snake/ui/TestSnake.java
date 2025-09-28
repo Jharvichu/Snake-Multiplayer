@@ -5,6 +5,8 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import main.java.com.snake.game.levels.LevelManager;
+import main.java.com.snake.game.levels.Level;
 
 /**
  * Clase temporal para testing del renderizado de serpientes
@@ -37,7 +39,7 @@ public class TestSnake {
     }
 
     /**
-     * Mover serpiente con lógica completa
+     * Mover serpiente con lógica completa (CORREGIDO para usar sistema real de colisiones)
      */
     public void move(List<TestSnake> otherSnakes, List<TestFruit> fruits) {
         if (!alive || body.isEmpty()) return;
@@ -61,46 +63,59 @@ public class TestSnake {
                 break;
         }
 
-        // Límites: X normal, Y reducido a 32
-        int maxGridX = UIConstants.BOARD_WIDTH - 1;  // 49
+        // 1. NUEVO: Verificar colisión con obstáculos usando sistema real
+        LevelManager levelManager = LevelManager.getCurrentInstance();
+        if (levelManager != null) {
+            Level currentLevel = levelManager.getCurrentLevel();
+            if (currentLevel != null && currentLevel.hasObstacleAt(newHead.x, newHead.y)) {
+                alive = false;
+                System.out.println("TestSnake " + playerId + " murió por obstáculo en (" + newHead.x + "," + newHead.y + ")");
+                return;
+            }
+        }
+
+        // 2. Verificar límites del tablero
+        int maxGridX = UIConstants.BOARD_WIDTH - 1;
         int maxGridY = 32; // Límite fijo en 32
 
-        // 1. Verificar límites - morir al tocar cualquier borde
         if (newHead.x < 0 || newHead.x > maxGridX ||
                 newHead.y < 0 || newHead.y > maxGridY) {
             alive = false;
+            System.out.println("TestSnake " + playerId + " murió por límites en (" + newHead.x + "," + newHead.y + ")");
             return;
         }
 
-        // 2. Verificar colisión con otras serpientes
+        // 3. Verificar colisión con otras serpientes
         if (checkCollisionWithOthers(newHead, otherSnakes)) {
             alive = false;
+            System.out.println("TestSnake " + playerId + " murió por colisión con otra serpiente");
             return;
         }
 
-        // 3. Verificar auto-colisión
+        // 4. Verificar auto-colisión
         if (body.contains(newHead)) {
             alive = false;
+            System.out.println("TestSnake " + playerId + " murió por auto-colisión");
             return;
         }
 
-        // 4. Verificar si come fruta
+        // 5. Verificar si come fruta
         TestFruit eatenFruit = checkFruitCollision(newHead, fruits);
         if (eatenFruit != null) {
             eatFruit(eatenFruit, fruits);
         }
 
-        // 5. Mover serpiente
+        // 6. Mover serpiente
         body.add(0, newHead);
 
-        // 6. Remover cola solo si no hay crecimiento pendiente
+        // 7. Remover cola solo si no hay crecimiento pendiente
         if (pendingGrowth > 0) {
             pendingGrowth--;
         } else {
             body.remove(body.size() - 1);
         }
 
-        // 7. Cambiar dirección ocasionalmente
+        // 8. Cambiar dirección ocasionalmente
         moveCounter++;
         if (moveCounter > 15 + random.nextInt(20)) {
             if (random.nextDouble() < 0.3) {

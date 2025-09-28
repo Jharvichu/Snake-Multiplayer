@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import main.java.com.snake.integration.GameIntegrator;
 
 import main.java.com.snake.game.engine.GameEngine;
 import main.java.com.snake.utils.Direction;
@@ -34,6 +35,8 @@ public class GameServer {
     private ServerMessageBroadcaster broadcaster;
     private PlayerManager playerManager;
 
+    private GameIntegrator integrator; // NUEVO
+
     // Mapa de clientes conectados
     private final ConcurrentHashMap<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
 
@@ -44,6 +47,8 @@ public class GameServer {
         this.broadcaster = new ServerMessageBroadcaster();
         this.playerManager = new PlayerManager();
         this.performanceMonitor = new PerformanceMonitor();
+        this.integrator = GameIntegrator.getInstance(); // NUEVO
+        this.integrator.connectServerToEngine(this); // NUEVO
     }
 
     /**
@@ -63,6 +68,8 @@ public class GameServer {
      * Bucle principal para aceptar nuevas conexiones
      */
     public void acceptConnections() {
+        integrator.startGameLoop(); // NUEVO - Iniciar game loop
+
         while (isRunning.get()) {
             try {
                 Socket clientSocket = serverSocket.accept();
@@ -77,9 +84,15 @@ public class GameServer {
                 int playerId = playerManager.addNewPlayer();
                 connectedPlayers.incrementAndGet();
 
-                // Crear jugador en GameEngine
-                Player newPlayer = new Player(playerId, "Player " + playerId);
-                GameEngine.getInstance().addPlayer(newPlayer);
+                // NUEVO: Usar GameIntegrator para agregar jugador
+                boolean success = integrator.addPlayer(playerId, "Player " + playerId);
+                if (!success) {
+                    System.out.println("Error al agregar jugador al GameEngine: " + playerId);
+                    clientSocket.close();
+                    playerManager.removePlayer(playerId);
+                    connectedPlayers.decrementAndGet();
+                    continue;
+                }
 
                 // Crear handler para el cliente
                 ClientHandler clientHandler = new ClientHandler(clientSocket, playerId, this);
@@ -98,6 +111,9 @@ public class GameServer {
 
                 // Notificar a otros clientes sobre nuevo jugador
                 broadcaster.broadcastToOthers("PLAYER_JOINED:" + playerId, playerId);
+
+                // NUEVO: Intentar iniciar juego si hay suficientes jugadores
+                integrator.tryStartGame();
 
             } catch (IOException e) {
                 if (isRunning.get()) {
@@ -124,8 +140,8 @@ public class GameServer {
             broadcaster.removeClient(playerId);
             playerManager.removePlayer(playerId);
 
-            // Remover del GameEngine
-            GameEngine.getInstance().removePlayer(playerId);
+            // NUEVO: Usar GameIntegrator para remover jugador
+            integrator.removePlayer(playerId);
 
             connectedPlayers.decrementAndGet();
 
@@ -141,11 +157,8 @@ public class GameServer {
      * Procesar mensaje de movimiento de cliente
      */
     public void processPlayerMove(int playerId, String direction) {
-        // Integrar con GameEngine
-        Direction gameDirection = parseDirection(direction);
-        if (gameDirection != null) {
-            GameEngine.getInstance().processPlayerInput(playerId, gameDirection);
-        }
+        // NUEVO: Usar GameIntegrator para procesar movimiento
+        integrator.processPlayerMove(playerId, direction);
 
         // También hacer broadcast para sincronizar
         broadcaster.broadcastToOthers("MOVE:" + playerId + ":" + direction, playerId);
@@ -179,6 +192,12 @@ public class GameServer {
         // Cerrar thread pool
         clientThreadPool.shutdown();
 
+        // NUEVO: Detener game loop del integrador
+        // CORRECTO:
+        if (integrator != null) {
+            integrator.shutdownGracefully(); // Este método sí existe
+        }
+
         // Cerrar server socket
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
@@ -189,6 +208,17 @@ public class GameServer {
         }
 
         System.out.println("Servidor cerrado");
+    }
+
+    // NUEVO: Método para obtener el GameIntegrator
+    public GameIntegrator getIntegrator() {
+        return integrator;
+    }
+
+    // NUEVO: Método para broadcast desde el integrador
+    public void broadcastFromIntegrator(String message) {
+        broadcaster.broadcastToAll(message);
+        performanceMonitor.recordMessageSent(message);
     }
 
     // Getters

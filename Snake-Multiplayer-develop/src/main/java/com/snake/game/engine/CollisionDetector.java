@@ -12,7 +12,7 @@ import java.util.HashMap;
 
 public class CollisionDetector {
     private Map<CollisionType, CollisionStrategy> strategies;
-    
+
     public CollisionDetector() {
         this.strategies = new HashMap<>();
         this.strategies.put(CollisionType.WALL, new WallCollisionStrategy());
@@ -21,12 +21,19 @@ public class CollisionDetector {
         this.strategies.put(CollisionType.FRUIT, new FruitCollisionStrategy());
     }
 
-    // Chequea si colisiono con una pared
+    // Chequea si colisiono con una pared O OBSTÁCULO
     public boolean checkWallCollision(Point point) {
         CollisionContext context = new CollisionContext(null);
         CollisionStrategy strategy = this.strategies.get(CollisionType.WALL);
 
-        return strategy.detectCollision(point, context);
+        boolean collision = strategy.detectCollision(point, context);
+
+        // DEBUG: Mostrar cuando hay colisión con obstáculo
+        if (collision) {
+            System.out.println("¡COLISIÓN DETECTADA! Posición: (" + point.x + "," + point.y + ")");
+        }
+
+        return collision;
     }
 
     // Chequea si colisiono consigo misma
@@ -37,7 +44,14 @@ public class CollisionDetector {
         CollisionContext context = new CollisionContext(snake);
         CollisionStrategy strategy = strategies.get(CollisionType.SELF);
 
-        return strategy.detectCollision(head, context);
+        boolean collision = strategy.detectCollision(head, context);
+
+        // DEBUG: Mostrar auto-colisión
+        if (collision) {
+            System.out.println("Auto-colisión detectada para serpiente en: (" + head.x + "," + head.y + ")");
+        }
+
+        return collision;
     }
 
     // Chequea si colisiono con otras serpiente (varias serpiente)
@@ -51,7 +65,14 @@ public class CollisionDetector {
         context.setOtherSnakes(otherSnakes);
         CollisionStrategy strategy = strategies.get(CollisionType.SNAKE);
 
-        return strategy.detectCollision(head, context);
+        boolean collision = strategy.detectCollision(head, context);
+
+        // DEBUG: Mostrar colisión entre serpientes
+        if (collision) {
+            System.out.println("Colisión entre serpientes en: (" + head.x + "," + head.y + ")");
+        }
+
+        return collision;
     }
 
     // Chequea si colisiono con otra serpiente (1 serpiente)
@@ -72,8 +93,22 @@ public class CollisionDetector {
         context.setFruits(fruits);
 
         FruitCollisionStrategy strategy = (FruitCollisionStrategy) strategies.get(CollisionType.FRUIT);
-        if (strategy.detectCollision(point, context)) { return strategy.getCollidingFruit(point, context); }
+        if (strategy.detectCollision(point, context)) {
+            Fruit fruit = strategy.getCollidingFruit(point, context);
+
+            // DEBUG: Mostrar cuando se come una fruta
+            if (fruit != null) {
+                System.out.println("Fruta comida en: (" + point.x + "," + point.y + ") valor: " + fruit.getGrowthValue());
+            }
+
+            return fruit;
+        }
 
         return null;
+    }
+
+    // NUEVO: Método de debug para verificar que se está ejecutando
+    public void debugCollisionCheck(Point point, String snakeId) {
+        System.out.println("Verificando colisiones para " + snakeId + " en (" + point.x + "," + point.y + ")");
     }
 }

@@ -79,7 +79,12 @@ public class GamePanel extends JPanel implements KeyListener {
             drawGrid(g2d);
         }
 
-        // NUEVO: Dibujar obstáculos del nivel actual
+        // NUEVO: Actualizar obstáculos móviles antes de dibujar
+        if (currentLevel != null && currentLevel.getId() == 4) {
+            currentLevel.updateMovingObstacles();
+        }
+
+        // Dibujar obstáculos del nivel actual
         if (currentLevel != null) {
             drawLevelObstacles(g2d, currentLevel);
         }
@@ -127,36 +132,64 @@ public class GamePanel extends JPanel implements KeyListener {
     // ========== NUEVOS MÉTODOS PARA NIVELES ==========
 
     /**
-     * Dibujar obstáculos del nivel actual
+     * Dibujar obstáculos del nivel actual (CORREGIDO para incluir obstáculos móviles)
      */
     private void drawLevelObstacles(Graphics2D g2d, Level level) {
-        if (level == null || level.getObstacles().isEmpty()) {
+        if (level == null) {
+            return;
+        }
+
+        // CAMBIO CRÍTICO: Usar getAllObstacles() en lugar de getObstacles()
+        List<Point> allObstacles = level.getAllObstacles();
+        if (allObstacles.isEmpty()) {
             return;
         }
 
         // Color del obstáculo según el nivel
         Color obstacleColor = getLevelObstacleColor(level.getId());
-        g2d.setColor(obstacleColor);
 
-        // Dibujar cada obstáculo
-        for (Point obstacle : level.getObstacles()) {
+        // Dibujar cada obstáculo (estáticos + móviles)
+        for (Point obstacle : allObstacles) {
             int x = UIConstants.gameToPixelX(obstacle.x);
             int y = UIConstants.gameToPixelY(obstacle.y);
 
-            // Obstáculo sólido con borde
-            g2d.fillRect(x, y, UIConstants.CELL_SIZE, UIConstants.CELL_SIZE);
+            // Determinar si es móvil para aplicar efecto visual diferente
+            boolean isMoving = level.getMovingObstacles().contains(obstacle);
 
-            // Borde más oscuro
-            g2d.setColor(obstacleColor.darker());
-            g2d.drawRect(x, y, UIConstants.CELL_SIZE - 1, UIConstants.CELL_SIZE - 1);
+            if (isMoving) {
+                // Efecto especial para obstáculos móviles
+                g2d.setColor(obstacleColor.brighter());
+                g2d.fillRect(x, y, UIConstants.CELL_SIZE, UIConstants.CELL_SIZE);
 
-            // Líneas decorativas
-            g2d.setStroke(new BasicStroke(1));
-            g2d.drawLine(x + 2, y + 2, x + UIConstants.CELL_SIZE - 3, y + UIConstants.CELL_SIZE - 3);
-            g2d.drawLine(x + UIConstants.CELL_SIZE - 3, y + 2, x + 2, y + UIConstants.CELL_SIZE - 3);
+                // Borde parpadeante para obstáculos móviles
+                g2d.setColor(Color.WHITE);
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRect(x, y, UIConstants.CELL_SIZE - 1, UIConstants.CELL_SIZE - 1);
 
-            // Restaurar color original
-            g2d.setColor(obstacleColor);
+                // Indicador de movimiento (flecha)
+                g2d.setColor(Color.YELLOW);
+                g2d.fillOval(x + 6, y + 6, 6, 6);
+
+            } else {
+                // Obstáculo estático normal
+                g2d.setColor(obstacleColor);
+                g2d.fillRect(x, y, UIConstants.CELL_SIZE, UIConstants.CELL_SIZE);
+
+                // Borde más oscuro
+                g2d.setColor(obstacleColor.darker());
+                g2d.drawRect(x, y, UIConstants.CELL_SIZE - 1, UIConstants.CELL_SIZE - 1);
+
+                // Líneas decorativas para obstáculos estáticos
+                g2d.setStroke(new BasicStroke(1));
+                g2d.drawLine(x + 2, y + 2, x + UIConstants.CELL_SIZE - 3, y + UIConstants.CELL_SIZE - 3);
+                g2d.drawLine(x + UIConstants.CELL_SIZE - 3, y + 2, x + 2, y + UIConstants.CELL_SIZE - 3);
+            }
+        }
+
+        // Debug: Mostrar información de obstáculos en consola
+        if (level.getId() == 4 && level.hasMovingObstacles()) {
+            System.out.println("Nivel 4: Dibujando " + allObstacles.size() + " obstáculos (" +
+                    level.getMovingObstacles().size() + " móviles)");
         }
     }
 
@@ -215,9 +248,6 @@ public class GamePanel extends JPanel implements KeyListener {
         fruitSpawnTimer.restart();
     }
 
-    /**
-     * Inicializar datos de testing
-     */
     private void initializeTestData() {
         // Usar serpientes adaptadas al nivel si existe
         if (currentLevel != null) {
@@ -268,6 +298,14 @@ public class GamePanel extends JPanel implements KeyListener {
             }
         });
         fruitSpawnTimer.start();
+
+        // NUEVO: Timer para actualizar obstáculos móviles
+        Timer obstacleUpdateTimer = new Timer(100, e -> {
+            if (currentLevel != null && currentLevel.getId() == 4) {
+                currentLevel.updateMovingObstacles();
+            }
+        });
+        obstacleUpdateTimer.start();
     }
 
     /**
@@ -287,7 +325,7 @@ public class GamePanel extends JPanel implements KeyListener {
     }
 
     /**
-     * Generar nueva fruta en posición libre
+     * Generar nueva fruta en posición libre (CORREGIDO)
      */
     private void spawnNewFruit() {
         List<Point> occupied = new ArrayList<>();
@@ -306,9 +344,9 @@ public class GamePanel extends JPanel implements KeyListener {
             }
         }
 
-        // Agregar posiciones de obstáculos del nivel
+        // CAMBIO CRÍTICO: Usar getAllObstacles() en lugar de getObstacles()
         if (currentLevel != null) {
-            occupied.addAll(currentLevel.getObstacles());
+            occupied.addAll(currentLevel.getAllObstacles()); // ← Cambio aquí
         }
 
         TestFruit newFruit = TestFruit.generateRandomFruit(occupied);

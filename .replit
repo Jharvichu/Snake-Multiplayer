@@ -1,0 +1,11 @@
+modules = ["java-graalvm"]
+
+[nix]
+channel = "stable-22_11"
+
+[deployment]
+run = ["sh", "-c", "javac -cp . **/*.java && java Main"]
+
+[[ports]]
+localPort = 8080
+externalPort = 80
