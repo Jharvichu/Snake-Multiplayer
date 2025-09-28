@@ -1,5 +1,7 @@
 package main.java.com.snake.ui;
 
+import main.java.com.snake.game.levels.Level;
+import main.java.com.snake.game.levels.LevelManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -25,6 +27,10 @@ public class GamePanel extends JPanel implements KeyListener {
     private Timer fruitSpawnTimer;
     private ScoreboardPanel scoreboardPanel; // Referencia al scoreboard
 
+    // NUEVOS CAMPOS PARA NIVELES
+    private Level currentLevel;
+    private LevelManager levelManager;
+
     public GamePanel() {
         initializePanel();
         initializeTestData();
@@ -49,6 +55,16 @@ public class GamePanel extends JPanel implements KeyListener {
         this.scoreboardPanel = scoreboardPanel;
     }
 
+    /**
+     * NUEVO: Establecer el LevelManager
+     */
+    public void setLevelManager(LevelManager levelManager) {
+        this.levelManager = levelManager;
+        if (levelManager != null) {
+            this.currentLevel = levelManager.getCurrentLevel();
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -61,6 +77,11 @@ public class GamePanel extends JPanel implements KeyListener {
         // Dibujar elementos del juego
         if (showGrid) {
             drawGrid(g2d);
+        }
+
+        // NUEVO: Dibujar obstáculos del nivel actual
+        if (currentLevel != null) {
+            drawLevelObstacles(g2d, currentLevel);
         }
 
         // Dibujar datos de testing si están activos
@@ -103,11 +124,107 @@ public class GamePanel extends JPanel implements KeyListener {
         }
     }
 
+    // ========== NUEVOS MÉTODOS PARA NIVELES ==========
+
+    /**
+     * Dibujar obstáculos del nivel actual
+     */
+    private void drawLevelObstacles(Graphics2D g2d, Level level) {
+        if (level == null || level.getObstacles().isEmpty()) {
+            return;
+        }
+
+        // Color del obstáculo según el nivel
+        Color obstacleColor = getLevelObstacleColor(level.getId());
+        g2d.setColor(obstacleColor);
+
+        // Dibujar cada obstáculo
+        for (Point obstacle : level.getObstacles()) {
+            int x = UIConstants.gameToPixelX(obstacle.x);
+            int y = UIConstants.gameToPixelY(obstacle.y);
+
+            // Obstáculo sólido con borde
+            g2d.fillRect(x, y, UIConstants.CELL_SIZE, UIConstants.CELL_SIZE);
+
+            // Borde más oscuro
+            g2d.setColor(obstacleColor.darker());
+            g2d.drawRect(x, y, UIConstants.CELL_SIZE - 1, UIConstants.CELL_SIZE - 1);
+
+            // Líneas decorativas
+            g2d.setStroke(new BasicStroke(1));
+            g2d.drawLine(x + 2, y + 2, x + UIConstants.CELL_SIZE - 3, y + UIConstants.CELL_SIZE - 3);
+            g2d.drawLine(x + UIConstants.CELL_SIZE - 3, y + 2, x + 2, y + UIConstants.CELL_SIZE - 3);
+
+            // Restaurar color original
+            g2d.setColor(obstacleColor);
+        }
+    }
+
+    /**
+     * Obtener color de obstáculos según el nivel
+     */
+    private Color getLevelObstacleColor(int levelId) {
+        switch (levelId) {
+            case 1: return new Color(100, 100, 100);    // Gris - Nivel básico
+            case 2: return new Color(139, 69, 19);      // Marrón - Nivel intermedio
+            case 3: return new Color(105, 105, 105);    // Gris oscuro - Nivel avanzado
+            case 4: return new Color(128, 0, 0);        // Rojo oscuro - Nivel experto
+            default: return Color.GRAY;
+        }
+    }
+
+    /**
+     * Método para actualizar cuando cambia el nivel
+     */
+    public void onLevelChanged(Level newLevel) {
+        this.currentLevel = newLevel;
+
+        // Reiniciar datos de testing para el nuevo nivel
+        if (showTestData) {
+            resetTestDataForLevel();
+        }
+
+        // Actualizar mensaje de testing
+        if (showMessage) {
+            showMessage = true; // Forzar mostrar mensaje del nuevo nivel
+        }
+
+        repaint();
+    }
+
+    /**
+     * Reiniciar datos de testing para el nivel actual
+     */
+    private void resetTestDataForLevel() {
+        if (animationTimer != null) animationTimer.stop();
+        if (reviveTimer != null) reviveTimer.stop();
+        if (fruitSpawnTimer != null) fruitSpawnTimer.stop();
+
+        // Crear serpientes adaptadas al nivel
+        if (currentLevel != null) {
+            testSnakes = TestSnake.createTestSnakesForLevel(currentLevel);
+        } else {
+            testSnakes = TestSnake.createTestSnakes();
+        }
+
+        testFruits = TestFruit.createTestFruits();
+
+        // Reiniciar timers
+        animationTimer.restart();
+        reviveTimer.restart();
+        fruitSpawnTimer.restart();
+    }
+
     /**
      * Inicializar datos de testing
      */
     private void initializeTestData() {
-        testSnakes = TestSnake.createTestSnakes();
+        // Usar serpientes adaptadas al nivel si existe
+        if (currentLevel != null) {
+            testSnakes = TestSnake.createTestSnakesForLevel(currentLevel);
+        } else {
+            testSnakes = TestSnake.createTestSnakes();
+        }
         testFruits = TestFruit.createTestFruits();
 
         // Timer para animar serpientes con lógica completa
@@ -189,30 +306,60 @@ public class GamePanel extends JPanel implements KeyListener {
             }
         }
 
+        // Agregar posiciones de obstáculos del nivel
+        if (currentLevel != null) {
+            occupied.addAll(currentLevel.getObstacles());
+        }
+
         TestFruit newFruit = TestFruit.generateRandomFruit(occupied);
         if (newFruit != null) {
             testFruits.add(newFruit);
         }
     }
 
+    /**
+     * MODIFICADO: Mostrar información del nivel actual
+     */
     private void drawTestingMessage(Graphics2D g2d) {
         g2d.setColor(UIConstants.TEXT_COLOR);
         g2d.setFont(UIConstants.TITLE_FONT);
 
-        String message = "Snake Multijugador - Modo Testing";
+        String message = "Snake Multijugador";
+        if (currentLevel != null) {
+            message += " - " + currentLevel.getName();
+        }
+
         FontMetrics fm = g2d.getFontMetrics();
         int x = (getWidth() - fm.stringWidth(message)) / 2;
-        int y = getHeight() / 2;
+        int y = getHeight() / 2 - 40;
 
         g2d.drawString(message, x, y);
 
+        // Información del nivel actual
+        if (currentLevel != null) {
+            g2d.setFont(UIConstants.SCORE_FONT);
+            String levelInfo = String.format("Nivel %d: %s | Meta: %d puntos | Velocidad: %dms",
+                    currentLevel.getId(),
+                    currentLevel.getDescription(),
+                    currentLevel.getRequiredScore(),
+                    currentLevel.getGameSpeed());
+
+            fm = g2d.getFontMetrics();
+            x = (getWidth() - fm.stringWidth(levelInfo)) / 2;
+            y = y + 25;
+
+            g2d.setColor(Color.CYAN);
+            g2d.drawString(levelInfo, x, y);
+        }
+
         // Instrucciones
-        g2d.setFont(UIConstants.SCORE_FONT);
-        String instructions = "WASD/Flechas: mover | G: grid | T: serpientes/frutas | M: mensaje | R: reset";
+        g2d.setFont(new Font("Arial", Font.PLAIN, 11));
+        String instructions = "WASD/Flechas: mover | G: grid | T: serpientes/frutas | M: mensaje | R: reset | L: cambiar nivel";
         fm = g2d.getFontMetrics();
         x = (getWidth() - fm.stringWidth(instructions)) / 2;
-        y = y + 30;
+        y = y + 25;
 
+        g2d.setColor(Color.LIGHT_GRAY);
         g2d.drawString(instructions, x, y);
     }
 
@@ -355,7 +502,11 @@ public class GamePanel extends JPanel implements KeyListener {
         repaint();
     }
 
-    // Implementación de KeyListener para testing
+    // ========== KEYLISTER MODIFICADO ==========
+
+    /**
+     * MODIFICADO: Incluir cambio de nivel con tecla L
+     */
     @Override
     public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
@@ -403,6 +554,14 @@ public class GamePanel extends JPanel implements KeyListener {
                 repaint();
                 System.out.println("Mensaje: " + (showMessage ? "ON" : "OFF"));
                 break;
+            case KeyEvent.VK_L:
+                // NUEVO: Cambiar nivel con L
+                if (levelManager != null) {
+                    showLevelSelectionInGame();
+                } else {
+                    System.out.println("LevelManager no disponible");
+                }
+                break;
             case KeyEvent.VK_SPACE:
                 if (testFruits != null && showTestData) {
                     spawnNewFruit();
@@ -425,6 +584,41 @@ public class GamePanel extends JPanel implements KeyListener {
             default:
                 break;
         }
+    }
+
+    /**
+     * NUEVO: Mostrar selección de nivel durante el juego
+     */
+    private void showLevelSelectionInGame() {
+        SwingUtilities.invokeLater(() -> {
+            // Encontrar la ventana padre
+            Container parent = getParent();
+            while (parent != null && !(parent instanceof GameWindow)) {
+                parent = parent.getParent();
+            }
+
+            if (parent instanceof GameWindow) {
+                GameWindow gameWindow = (GameWindow) parent;
+                LevelManager manager = gameWindow.getLevelManager();
+
+                Level newLevel = LevelSelectionDialog.showLevelSelection(gameWindow, manager);
+                if (newLevel != null) {
+                    manager.setLevel(newLevel.getId());
+                    onLevelChanged(newLevel);
+                    System.out.println("Nivel cambiado a: " + newLevel.getName());
+                }
+            } else {
+                // Fallback: usar LevelManager directo si está disponible
+                if (levelManager != null) {
+                    Level newLevel = LevelSelectionDialog.showLevelSelection(null, levelManager);
+                    if (newLevel != null) {
+                        levelManager.setLevel(newLevel.getId());
+                        onLevelChanged(newLevel);
+                        System.out.println("Nivel cambiado a: " + newLevel.getName());
+                    }
+                }
+            }
+        });
     }
 
     @Override

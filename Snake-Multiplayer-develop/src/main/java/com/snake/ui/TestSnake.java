@@ -1,5 +1,6 @@
 package main.java.com.snake.ui;
 
+import main.java.com.snake.game.levels.Level;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
@@ -228,8 +229,143 @@ public class TestSnake {
     public void setDirection(String direction) { this.direction = direction; }
     public void setAlive(boolean alive) { this.alive = alive; }
 
+    // ========== NUEVOS MÉTODOS PARA NIVELES ==========
+
     /**
-     * Crear serpientes de ejemplo para testing
+     * Crear serpientes de ejemplo para un nivel específico, evitando obstáculos
+     */
+    public static List<TestSnake> createTestSnakesForLevel(Level level) {
+        List<TestSnake> snakes = new ArrayList<>();
+
+        if (level == null) {
+            return createTestSnakes(); // Fallback al método original
+        }
+
+        // Crear serpientes evitando obstáculos del nivel
+        int margin = 3;
+        List<Point> obstacles = level.getObstacles();
+
+        // Buscar posiciones seguras para cada serpiente
+        Point[] safePositions = findSafePositions(level, obstacles, 4);
+
+        for (int i = 0; i < Math.min(4, safePositions.length); i++) {
+            Point pos = safePositions[i];
+            TestSnake snake = new TestSnake(i, pos.x, pos.y, 5);
+
+            // Establecer dirección inicial segura
+            String safeDirection = findSafeDirection(pos, obstacles, level);
+            snake.setDirection(safeDirection);
+
+            snakes.add(snake);
+        }
+
+        return snakes;
+    }
+
+    /**
+     * Encontrar posiciones seguras evitando obstáculos
+     */
+    private static Point[] findSafePositions(Level level, List<Point> obstacles, int count) {
+        List<Point> safePositions = new ArrayList<>();
+        int margin = 5;
+
+        // Intentar encontrar posiciones en las esquinas primero
+        Point[] cornerPositions = {
+                new Point(margin, margin),                                    // Superior izquierda
+                new Point(level.getWidth() - margin, margin),                // Superior derecha
+                new Point(margin, level.getHeight() - margin),               // Inferior izquierda
+                new Point(level.getWidth() - margin, level.getHeight() - margin) // Inferior derecha
+        };
+
+        for (Point corner : cornerPositions) {
+            if (isPositionSafe(corner, obstacles, margin)) {
+                safePositions.add(corner);
+                if (safePositions.size() >= count) break;
+            }
+        }
+
+        // Si no hay suficientes posiciones en esquinas, buscar otras
+        Random random = new Random();
+        int maxAttempts = 50;
+        int attempts = 0;
+
+        while (safePositions.size() < count && attempts < maxAttempts) {
+            Point randomPos = new Point(
+                    margin + random.nextInt(level.getWidth() - 2 * margin),
+                    margin + random.nextInt(level.getHeight() - 2 * margin)
+            );
+
+            if (isPositionSafe(randomPos, obstacles, margin) && !safePositions.contains(randomPos)) {
+                safePositions.add(randomPos);
+            }
+            attempts++;
+        }
+
+        // Si aún no hay suficientes, usar las esquinas aunque no sean perfectamente seguras
+        while (safePositions.size() < count) {
+            for (Point corner : cornerPositions) {
+                if (!safePositions.contains(corner)) {
+                    safePositions.add(corner);
+                    if (safePositions.size() >= count) break;
+                }
+            }
+            break;
+        }
+
+        return safePositions.toArray(new Point[0]);
+    }
+
+    /**
+     * Verificar si una posición es segura (lejos de obstáculos)
+     */
+    private static boolean isPositionSafe(Point pos, List<Point> obstacles, int minDistance) {
+        if (obstacles == null || obstacles.isEmpty()) {
+            return true;
+        }
+
+        for (Point obstacle : obstacles) {
+            double distance = pos.distance(obstacle);
+            if (distance < minDistance) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Encontrar una dirección segura para moverse inicialmente
+     */
+    private static String findSafeDirection(Point pos, List<Point> obstacles, Level level) {
+        String[] directions = {"UP", "DOWN", "LEFT", "RIGHT"};
+
+        for (String direction : directions) {
+            Point nextPos = getNextPosition(pos, direction);
+            if (nextPos.x >= 0 && nextPos.x < level.getWidth() &&
+                    nextPos.y >= 0 && nextPos.y < level.getHeight() &&
+                    isPositionSafe(nextPos, obstacles, 3)) {
+                return direction;
+            }
+        }
+
+        return "RIGHT"; // Fallback
+    }
+
+    /**
+     * Obtener la siguiente posición según la dirección
+     */
+    private static Point getNextPosition(Point current, String direction) {
+        Point next = new Point(current);
+        switch (direction) {
+            case "UP": next.y--; break;
+            case "DOWN": next.y++; break;
+            case "LEFT": next.x--; break;
+            case "RIGHT": next.x++; break;
+        }
+        return next;
+    }
+
+    /**
+     * Crear serpientes de ejemplo para testing (método original)
      */
     public static List<TestSnake> createTestSnakes() {
         List<TestSnake> snakes = new ArrayList<>();
