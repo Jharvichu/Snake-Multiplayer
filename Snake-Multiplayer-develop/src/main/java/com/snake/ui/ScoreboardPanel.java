@@ -41,14 +41,26 @@ public class ScoreboardPanel extends JPanel {
 
     private void initializeTestData() {
         playerScores = new ArrayList<>();
+        // Solo inicializar en modo demo - se reemplaza con datos reales en multiplayer
         playerScores.add(new PlayerScore(0, "Jugador 1", 150, 15, true, gameStartTime));
         playerScores.add(new PlayerScore(1, "Jugador 2", 89, 8, true, gameStartTime + 5000));
         playerScores.add(new PlayerScore(2, "Jugador 3", 203, 20, false, gameStartTime + 10000));
         playerScores.add(new PlayerScore(3, "Jugador 4", 67, 6, true, gameStartTime + 15000));
 
-        // Simular cambios de puntaje para demo
-        javax.swing.Timer scoreChangeTimer = new javax.swing.Timer(3000, e -> simulateScoreChanges());
-        scoreChangeTimer.start();
+        // Solo simular en modo demo
+        if (isDemoMode) {
+            javax.swing.Timer scoreChangeTimer = new javax.swing.Timer(3000, e -> simulateScoreChanges());
+            scoreChangeTimer.start();
+        }
+    }
+    
+    private boolean isDemoMode = true; // Flag para modo demo
+    
+    public void setMultiplayerMode(boolean isMultiplayer) {
+        this.isDemoMode = !isMultiplayer;
+        if (isMultiplayer) {
+            resetScores(); // Limpiar datos de demo
+        }
     }
 
     private void startUpdateTimer() {
@@ -216,9 +228,7 @@ public class ScoreboardPanel extends JPanel {
 
     public void resetScores() {
         gameStartTime = System.currentTimeMillis();
-        for (PlayerScore player : playerScores) {
-            player.reset(gameStartTime);
-        }
+        playerScores.clear(); // Limpiar lista de jugadores
     }
 
     // Simulación para demo
