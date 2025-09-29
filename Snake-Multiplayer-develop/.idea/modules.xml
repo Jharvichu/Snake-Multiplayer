@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Snake-Multiplayer-develop.iml" filepath="$PROJECT_DIR$/Snake-Multiplayer-develop.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Snake-Multiplayer.iml" filepath="$PROJECT_DIR$/Snake-Multiplayer.iml" />
     </modules>
   </component>
 </project>
