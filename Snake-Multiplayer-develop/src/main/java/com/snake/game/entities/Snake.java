@@ -2,7 +2,6 @@ package main.java.com.snake.game.entities;
 
 import main.java.com.snake.utils.Constants;
 import main.java.com.snake.utils.Direction;
-import main.java.com.snake.utils.FruitType;
 
 import java.awt.*;
 import java.util.List;
@@ -24,8 +23,8 @@ public class Snake {
     public Snake(int startX, int startY, Color color) {
         this.body = new LinkedList<>();
         this.body.add(new Point(startX, startY));
-        nextDirection = Direction.UP;
-        currentDirection = Direction.UP;
+        nextDirection = Direction.DOWN;  // Cambiado de UP a DOWN para coincidir con el cuerpo inicial
+        currentDirection = Direction.DOWN;
         this.color = color;
         this.alive = true;
         this.length = 0;
@@ -43,9 +42,12 @@ public class Snake {
     // METODOS PRINCIPALES
 
     private void createInitialSnake() {
+        // El cuerpo ya tiene la cabeza, agregar segmentos adicionales en dirección opuesta al movimiento
+        // Si la serpiente va hacia DOWN, el cuerpo debe extenderse hacia UP
         for (int i = 1; i < Constants.INITIAL_SNAKE_LENGTH; i++) {
                 Point lastSegment = body.getLast();
-                Point newSegment = new Point(lastSegment.x, lastSegment.y + 1);
+                // Extender hacia arriba ya que la dirección es DOWN
+                Point newSegment = new Point(lastSegment.x, lastSegment.y - 1);
                 body.addLast(newSegment);
         }
         this.length = body.size();
