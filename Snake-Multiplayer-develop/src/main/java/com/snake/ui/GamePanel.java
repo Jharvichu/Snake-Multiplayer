@@ -26,6 +26,11 @@ public class GamePanel extends JPanel implements KeyListener {
     private Timer reviveTimer;
     private Timer fruitSpawnTimer;
     private ScoreboardPanel scoreboardPanel; // Referencia al scoreboard
+    
+    // Estado del juego multijugador real
+    private boolean isMultiplayerMode = false;
+    private String currentGameState = null;
+    private main.java.com.snake.client.GameClient gameClient = null;
 
     // NUEVOS CAMPOS PARA NIVELES
     private Level currentLevel;
@@ -89,19 +94,29 @@ public class GamePanel extends JPanel implements KeyListener {
             drawLevelObstacles(g2d, currentLevel);
         }
 
-        // Dibujar datos de testing si están activos
-        if (showTestData) {
-            if (testSnakes != null) {
-                drawTestSnakes(g2d, testSnakes);
-            }
-            if (testFruits != null) {
-                drawTestFruits(g2d, testFruits);
+        // Dibujar contenido según el modo actual
+        if (isMultiplayerMode) {
+            // Modo multijugador: dibujar estado real del juego
+            drawMultiplayerGame(g2d);
+        } else {
+            // Modo testing: dibujar datos de prueba
+            if (showTestData) {
+                if (testSnakes != null) {
+                    drawTestSnakes(g2d, testSnakes);
+                }
+                if (testFruits != null) {
+                    drawTestFruits(g2d, testFruits);
+                }
             }
         }
 
         // Mostrar mensaje solo si está habilitado
         if (showMessage) {
-            drawTestingMessage(g2d);
+            if (isMultiplayerMode) {
+                drawMultiplayerMessage(g2d);
+            } else {
+                drawTestingMessage(g2d);
+            }
         }
 
         g2d.dispose();
@@ -507,16 +522,64 @@ public class GamePanel extends JPanel implements KeyListener {
      * Actualizar estado del juego
      */
     public void updateGameState(String gameStateJson) {
-        if (gameStateJson != null) {
-            System.out.println("Estado actualizado: " + gameStateJson);
+        if (gameStateJson != null && isMultiplayerMode) {
+            this.currentGameState = gameStateJson;
+            updateScoreboardFromGameState(gameStateJson);
             repaint();
         }
+    }
+
+    /**
+     * Actualizar scoreboard con datos reales del juego
+     */
+    private void updateScoreboardFromGameState(String gameStateJson) {
+        if (scoreboardPanel == null) return;
+        
+        String playersSection = extractJsonSection(gameStateJson, "players");
+        if (playersSection == null) return;
+        
+        String[] playerEntries = playersSection.split("\\},\\{");
+        
+        // Limpiar datos antiguos y añadir jugadores actuales
+        scoreboardPanel.resetScores();
+        
+        for (String playerEntry : playerEntries) {
+            if (playerEntry.trim().isEmpty()) continue;
+            
+            int playerId = extractIntFromJson(playerEntry, "id");
+            String playerName = extractStringFromJson(playerEntry, "name");
+            int score = extractIntFromJson(playerEntry, "score");
+            boolean isAlive = playerEntry.contains("\"alive\":true");
+            
+            if (playerId >= 0 && playerName != null) {
+                scoreboardPanel.addPlayer(playerId, playerName);
+                scoreboardPanel.updatePlayerScore(playerId, score, score / 10, isAlive);
+            }
+        }
+    }
+    
+    /**
+     * Extraer string del JSON
+     */
+    private String extractStringFromJson(String json, String key) {
+        String searchPattern = "\"" + key + "\":\"";
+        int startIndex = json.indexOf(searchPattern);
+        if (startIndex == -1) return null;
+        
+        startIndex += searchPattern.length();
+        int endIndex = json.indexOf("\"", startIndex);
+        if (endIndex == -1) return null;
+        
+        return json.substring(startIndex, endIndex);
     }
 
     /**
      * Conectar con el cliente real del juego
      */
     public void setGameClient(main.java.com.snake.client.GameClient client) {
+        this.gameClient = client;
+        this.isMultiplayerMode = true;
+        
         // Remover el KeyListener de testing
         for (java.awt.event.KeyListener kl : getKeyListeners()) {
             removeKeyListener(kl);
@@ -536,7 +599,12 @@ public class GamePanel extends JPanel implements KeyListener {
         if (reviveTimer != null) reviveTimer.stop();
         if (fruitSpawnTimer != null) fruitSpawnTimer.stop();
 
-        System.out.println("GamePanel conectado con cliente real");
+        // Activar modo multijugador en el scoreboard
+        if (scoreboardPanel != null) {
+            scoreboardPanel.setMultiplayerMode(true);
+        }
+
+        System.out.println("GamePanel conectado con cliente real - Modo Multijugador activado");
         repaint();
     }
 
@@ -552,19 +620,15 @@ public class GamePanel extends JPanel implements KeyListener {
         switch (keyCode) {
             case KeyEvent.VK_W:
             case KeyEvent.VK_UP:
-                System.out.println("Movimiento: ARRIBA");
                 break;
             case KeyEvent.VK_S:
             case KeyEvent.VK_DOWN:
-                System.out.println("Movimiento: ABAJO");
                 break;
             case KeyEvent.VK_A:
             case KeyEvent.VK_LEFT:
-                System.out.println("Movimiento: IZQUIERDA");
                 break;
             case KeyEvent.VK_D:
             case KeyEvent.VK_RIGHT:
-                System.out.println("Movimiento: DERECHA");
                 break;
             case KeyEvent.VK_G:
                 showGrid = !showGrid;
@@ -667,5 +731,269 @@ public class GamePanel extends JPanel implements KeyListener {
     @Override
     public void keyTyped(KeyEvent e) {
         // No necesario por ahora
+    }
+    
+    /**
+     * Dibujar el estado del juego multijugador real
+     */
+    private void drawMultiplayerGame(Graphics2D g2d) {
+        if (currentGameState != null) {
+            try {
+                // Parsear y dibujar serpientes
+                drawMultiplayerSnakes(g2d, currentGameState);
+                
+                // Parsear y dibujar frutas
+                drawMultiplayerFruits(g2d, currentGameState);
+                
+            } catch (Exception e) {
+                // Si hay error parseando, mostrar mensaje de error
+                g2d.setColor(Color.RED);
+                g2d.setFont(UIConstants.SCORE_FONT);
+                String error = "Error renderizando juego: " + e.getMessage();
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(error)) / 2;
+                int y = getHeight() / 2;
+                g2d.drawString(error, x, y);
+            }
+        } else {
+            // No hay estado aún
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(UIConstants.SCORE_FONT);
+            String waiting = "Esperando datos del servidor...";
+            FontMetrics fm = g2d.getFontMetrics();
+            int x = (getWidth() - fm.stringWidth(waiting)) / 2;
+            int y = getHeight() / 2;
+            g2d.drawString(waiting, x, y);
+        }
+    }
+    
+    /**
+     * Parsear y dibujar serpientes del JSON del estado del juego
+     */
+    private void drawMultiplayerSnakes(Graphics2D g2d, String gameStateJson) {
+        // Parser simple para extraer serpientes del JSON
+        String playersSection = extractJsonSection(gameStateJson, "players");
+        if (playersSection == null) {
+            return;
+        }
+        
+        // Buscar cada serpiente en el JSON
+        String[] playerEntries = playersSection.split("\\},\\{");
+        
+        for (int i = 0; i < playerEntries.length; i++) {
+            String playerEntry = playerEntries[i];
+            
+            // Extraer información de la serpiente
+            boolean isAlive = playerEntry.contains("\"alive\":true");
+            if (!isAlive) continue;
+            
+            int playerId = extractIntFromJson(playerEntry, "id");
+            String bodySection = extractJsonSection(playerEntry, "body");
+            
+            if (bodySection != null) {
+                drawSnakeFromJson(g2d, bodySection, playerId);
+            }
+        }
+    }
+    
+    /**
+     * Parsear y dibujar frutas del JSON del estado del juego
+     */
+    private void drawMultiplayerFruits(Graphics2D g2d, String gameStateJson) {
+        String fruitsSection = extractJsonSection(gameStateJson, "fruits");
+        if (fruitsSection == null) return;
+        
+        String[] fruitEntries = fruitsSection.split("\\},\\{");
+        for (String fruitEntry : fruitEntries) {
+            int x = extractIntFromJson(fruitEntry, "x");
+            int y = extractIntFromJson(fruitEntry, "y");
+            int value = extractIntFromJson(fruitEntry, "value");
+            
+            if (x >= 0 && y >= 0) {
+                drawMultiplayerFruit(g2d, x, y, value);
+            }
+        }
+    }
+    
+    /**
+     * Dibujar una serpiente basada en su cuerpo del JSON
+     */
+    private void drawSnakeFromJson(Graphics2D g2d, String bodySection, int playerId) {
+        String[] bodyPoints = bodySection.split("\\},\\{");
+        Color playerColor = UIConstants.getPlayerColor(playerId);
+        
+        for (int i = 0; i < bodyPoints.length; i++) {
+            String point = bodyPoints[i];
+            int x = extractIntFromJson(point, "x");
+            int y = extractIntFromJson(point, "y");
+            
+            if (x >= 0 && y >= 0) {
+                int pixelX = UIConstants.gameToPixelX(x);
+                int pixelY = UIConstants.gameToPixelY(y);
+                
+                if (i == 0) {
+                    // Dibujar cabeza
+                    g2d.setColor(playerColor.darker());
+                    g2d.fillRoundRect(pixelX, pixelY, UIConstants.CELL_SIZE, UIConstants.CELL_SIZE, 8, 8);
+                    g2d.setColor(playerColor);
+                    g2d.fillRoundRect(pixelX + 2, pixelY + 2, UIConstants.CELL_SIZE - 4, UIConstants.CELL_SIZE - 4, 6, 6);
+                    
+                    // Ojos
+                    g2d.setColor(Color.WHITE);
+                    g2d.fillOval(pixelX + 4, pixelY + 4, 3, 3);
+                    g2d.fillOval(pixelX + UIConstants.CELL_SIZE - 7, pixelY + 4, 3, 3);
+                    g2d.setColor(Color.BLACK);
+                    g2d.fillOval(pixelX + 5, pixelY + 5, 2, 2);
+                    g2d.fillOval(pixelX + UIConstants.CELL_SIZE - 6, pixelY + 5, 2, 2);
+                } else {
+                    // Dibujar cuerpo
+                    Color bodyColor = new Color(
+                        Math.max(playerColor.getRed() - i * 10, 50),
+                        Math.max(playerColor.getGreen() - i * 10, 50),
+                        Math.max(playerColor.getBlue() - i * 10, 50)
+                    );
+                    g2d.setColor(bodyColor);
+                    g2d.fillRoundRect(pixelX + 1, pixelY + 1, UIConstants.CELL_SIZE - 2, UIConstants.CELL_SIZE - 2, 4, 4);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Dibujar una fruta individual del multijugador
+     */
+    private void drawMultiplayerFruit(Graphics2D g2d, int x, int y, int value) {
+        int pixelX = UIConstants.gameToPixelX(x);
+        int pixelY = UIConstants.gameToPixelY(y);
+        Color fruitColor = UIConstants.getFruitColor(value);
+        
+        // Dibujar fruta
+        g2d.setColor(fruitColor);
+        g2d.fillOval(pixelX + 1, pixelY + 1, UIConstants.CELL_SIZE - 2, UIConstants.CELL_SIZE - 2);
+        
+        // Número del valor
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(UIConstants.FRUIT_FONT);
+        FontMetrics fm = g2d.getFontMetrics();
+        String valueStr = String.valueOf(value);
+        int textX = pixelX + (UIConstants.CELL_SIZE - fm.stringWidth(valueStr)) / 2;
+        int textY = pixelY + (UIConstants.CELL_SIZE + fm.getAscent()) / 2 - 2;
+        g2d.drawString(valueStr, textX, textY);
+    }
+    
+    /**
+     * Extraer una sección del JSON (parser simple)
+     */
+    private String extractJsonSection(String json, String sectionName) {
+        String searchKey = "\"" + sectionName + "\":";
+        int startIndex = json.indexOf(searchKey);
+        if (startIndex == -1) return null;
+        
+        startIndex += searchKey.length();
+        
+        // Buscar el inicio de la sección (array [] o objeto {})
+        char startChar = ' ';
+        while (startIndex < json.length()) {
+            char c = json.charAt(startIndex);
+            if (c == '[' || c == '{') {
+                startChar = c;
+                break;
+            }
+            startIndex++;
+        }
+        
+        if (startChar == ' ') return null;
+        
+        // Encontrar el cierre correspondiente
+        char endChar = (startChar == '[') ? ']' : '}';
+        int depth = 0;
+        int endIndex = startIndex;
+        
+        for (int i = startIndex; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == startChar) depth++;
+            if (c == endChar) depth--;
+            if (depth == 0) {
+                endIndex = i;
+                break;
+            }
+        }
+        
+        return json.substring(startIndex + 1, endIndex);
+    }
+    
+    /**
+     * Extraer un entero del JSON (parser simple)
+     */
+    private int extractIntFromJson(String json, String key) {
+        String searchKey = "\"" + key + "\":";
+        int startIndex = json.indexOf(searchKey);
+        if (startIndex == -1) return -1;
+        
+        startIndex += searchKey.length();
+        
+        // Saltar espacios
+        while (startIndex < json.length() && Character.isWhitespace(json.charAt(startIndex))) {
+            startIndex++;
+        }
+        
+        // Extraer el número
+        StringBuilder number = new StringBuilder();
+        for (int i = startIndex; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (Character.isDigit(c) || c == '-') {
+                number.append(c);
+            } else {
+                break;
+            }
+        }
+        
+        try {
+            return Integer.parseInt(number.toString());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+    
+    /**
+     * Mostrar mensaje del modo multijugador
+     */
+    private void drawMultiplayerMessage(Graphics2D g2d) {
+        g2d.setColor(UIConstants.TEXT_COLOR);
+        g2d.setFont(UIConstants.TITLE_FONT);
+
+        String message = "Snake Multijugador - Modo Online";
+        if (currentLevel != null) {
+            message += " - " + currentLevel.getName();
+        }
+
+        FontMetrics fm = g2d.getFontMetrics();
+        int x = (getWidth() - fm.stringWidth(message)) / 2;
+        int y = 30;
+
+        g2d.drawString(message, x, y);
+
+        // Información del jugador
+        if (gameClient != null) {
+            g2d.setFont(UIConstants.SCORE_FONT);
+            String playerInfo = "Jugador ID: " + gameClient.getPlayerId();
+            
+            fm = g2d.getFontMetrics();
+            x = (getWidth() - fm.stringWidth(playerInfo)) / 2;
+            y = y + 25;
+
+            g2d.setColor(Color.CYAN);
+            g2d.drawString(playerInfo, x, y);
+        }
+
+        // Instrucciones para el modo multijugador
+        g2d.setFont(new Font("Arial", Font.PLAIN, 11));
+        String instructions = "WASD/Flechas: mover tu serpiente | Conectado al servidor multijugador";
+        fm = g2d.getFontMetrics();
+        x = (getWidth() - fm.stringWidth(instructions)) / 2;
+        y = y + 25;
+
+        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.drawString(instructions, x, y);
     }
 }
