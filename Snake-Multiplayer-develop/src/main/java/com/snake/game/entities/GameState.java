@@ -141,6 +141,18 @@ public class GameState {
                     this.totalGameTime = this.gameDuration;
                 }
                 break;
+            case WAITING_FOR_PLAYERS:
+                // Preparar para esperar jugadores
+                break;
+            case PAUSED:
+                // El juego está pausado
+                break;
+            case READY:
+                // Todos los jugadores están listos
+                break;
+            default:
+                // Manejar cualquier estado no esperado
+                break;
         }
     }
     
@@ -231,6 +243,11 @@ public class GameState {
         public int getPlayerCount() { return playerCount; }
         public int getRoundNumber() { return roundNumber; }
         public long getStartTime() { return startTime; }
+    }
+    
+    // Getter para totalGameTime 
+    public long getTotalGameTime() {
+        return totalGameTime;
     }
     
     /**

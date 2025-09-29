@@ -225,6 +225,8 @@ public class GameEngine {
         int playerCount = players.size();
         int spacing = Constants.GRID_WIDTH / (playerCount + 1);
         
+        System.out.println("DEBUG GameEngine: Inicializando " + playerCount + " serpientes");
+        
         int index = 0;
         for (Player player : players.values()) {
             int startX = spacing * (index + 1);
@@ -233,6 +235,8 @@ public class GameEngine {
             Color color = new Color(Constants.PLAYER_COLORS[index % Constants.PLAYER_COLORS.length]);
             Snake snake = new Snake(startX, startY, color);
             player.setSnake(snake);
+            
+            System.out.println("DEBUG GameEngine: Jugador " + player.getPlayerId() + " - serpiente creada en (" + startX + "," + startY + ") alive: " + snake.getAlive());
             
             index++;
         }
@@ -297,7 +301,10 @@ public class GameEngine {
             .filter(p -> p.getSnake() != null && p.getSnake().getAlive())
             .count();
             
+        System.out.println("DEBUG GameEngine: checkGameEnd - total players: " + players.size() + ", alive players: " + alivePlayers + ", MIN_PLAYERS: " + Constants.MIN_PLAYERS);
+        
         if (alivePlayers < Constants.MIN_PLAYERS) {
+            System.out.println("DEBUG GameEngine: Deteniendo juego - jugadores vivos insuficientes");
             stopGame();
         }
     }
