@@ -5,7 +5,6 @@ import main.java.com.snake.game.levels.LevelManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * Componente UI para mostrar y controlar niveles

@@ -4,8 +4,6 @@ import main.java.com.snake.game.levels.Level;
 import main.java.com.snake.game.levels.LevelManager;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**

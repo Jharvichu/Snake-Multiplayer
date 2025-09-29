@@ -21,11 +21,8 @@ public class GameWindow extends JFrame {
     public GameWindow() {
         initializeLevelManager();
 
-        // Mostrar selección de nivel al inicio
-        if (!showLevelSelection()) {
-            System.exit(0);
-            return;
-        }
+        // Iniciar automáticamente en nivel 1 para multijugador
+        levelManager.setLevel(1);
 
         initializeWindow();
         setupComponents();
@@ -36,15 +33,7 @@ public class GameWindow extends JFrame {
         levelManager = new LevelManager();
     }
 
-    private boolean showLevelSelection() {
-        Level selectedLevel = LevelSelectionDialog.showLevelSelection(this, levelManager);
 
-        if (selectedLevel != null) {
-            levelManager.setLevel(selectedLevel.getId());
-            return true;
-        }
-        return false;
-    }
 
     private void initializeWindow() {
         setTitle(UIConstants.WINDOW_TITLE);
@@ -81,7 +70,7 @@ public class GameWindow extends JFrame {
         scorePanel.setBackground(Color.DARK_GRAY);
         scorePanel.setBorder(BorderFactory.createTitledBorder("Estado del Juego"));
 
-        statusLabel = new JLabel("Conectando al servidor...");
+        statusLabel = new JLabel("Iniciando juego multijugador...");
         statusLabel.setForeground(UIConstants.TEXT_COLOR);
         statusLabel.setFont(UIConstants.SCORE_FONT);
 
@@ -182,6 +171,12 @@ public class GameWindow extends JFrame {
     public void updateConnectionStatus(String status) {
         if (statusLabel != null) {
             statusLabel.setText(status);
+        }
+    }
+    
+    public void updatePlayerCount(int count) {
+        if (playersLabel != null) {
+            playersLabel.setText("Jugadores: " + count);
         }
     }
 

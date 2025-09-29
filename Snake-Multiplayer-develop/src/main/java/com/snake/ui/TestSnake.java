@@ -1,6 +1,5 @@
 package main.java.com.snake.ui;
 
-import main.java.com.snake.game.levels.Level;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
@@ -257,7 +256,6 @@ public class TestSnake {
         }
 
         // Crear serpientes evitando obstáculos del nivel
-        int margin = 3;
         List<Point> obstacles = level.getObstacles();
 
         // Buscar posiciones seguras para cada serpiente
