@@ -87,8 +87,6 @@ public class ClientHandler implements Runnable {
             return;
         }
 
-        System.out.println("Mensaje de cliente " + playerId + ": " + message);
-
         try {
             // Parsear el mensaje según el protocolo
             String[] parts = message.split(":", 2);
@@ -119,7 +117,12 @@ public class ClientHandler implements Runnable {
                         try {
                             int requestedPlayerId = Integer.parseInt(parts[1]);
                             // El playerId ya está asignado por el servidor
-                            sendMessageToClient("CONNECTED:" + playerId);
+                            // Validar que el ID solicitado coincida con el asignado
+                            if (requestedPlayerId == playerId) {
+                                sendMessageToClient("CONNECTED:" + playerId);
+                            } else {
+                                sendMessageToClient("ERROR:Player ID no coincide");
+                            }
                         } catch (NumberFormatException e) {
                             sendMessageToClient("ERROR:Player ID inválido");
                         }

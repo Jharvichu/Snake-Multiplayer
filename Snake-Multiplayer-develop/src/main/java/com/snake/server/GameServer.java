@@ -10,10 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import main.java.com.snake.integration.GameIntegrator;
 
-import main.java.com.snake.game.engine.GameEngine;
-import main.java.com.snake.utils.Direction;
-import main.java.com.snake.game.entities.Player;
-
 /**
  * Servidor principal del juego Snake Multijugador
  * Maneja conexiones de clientes y coordina la comunicación
@@ -59,7 +55,7 @@ public class GameServer {
         isRunning.set(true);
 
         System.out.println("Servidor iniciado en puerto " + port);
-        System.out.println("Esperando conexiones... (máximo " + maxPlayers + " jugadores)");
+        System.out.println("Esperando conexiones... (1-" + maxPlayers + " jugadores, juego inicia automáticamente)");
 
         acceptConnections();
     }
@@ -164,18 +160,7 @@ public class GameServer {
         broadcaster.broadcastToOthers("MOVE:" + playerId + ":" + direction, playerId);
     }
 
-    /**
-     * Parsear dirección de string a enum
-     */
-    private Direction parseDirection(String directionStr) {
-        switch (directionStr.toUpperCase()) {
-            case "UP": return Direction.UP;
-            case "DOWN": return Direction.DOWN;
-            case "LEFT": return Direction.LEFT;
-            case "RIGHT": return Direction.RIGHT;
-            default: return null;
-        }
-    }
+
 
     /**
      * Cerrar servidor limpiamente

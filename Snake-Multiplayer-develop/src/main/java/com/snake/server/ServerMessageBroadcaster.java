@@ -68,7 +68,6 @@ public class ServerMessageBroadcaster {
     public void sendToSpecificPlayer(String message, int playerId) {
         ClientHandler client = clients.get(playerId);
         if (client != null && client.isConnected()) {
-            System.out.println("Enviando a Player " + playerId + ": " + message);
             client.sendMessageToClient(message);
         } else {
             System.err.println("No se pudo enviar mensaje a Player " + playerId + ": cliente no encontrado o desconectado");
