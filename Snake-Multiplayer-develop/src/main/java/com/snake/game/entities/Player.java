@@ -1,7 +1,5 @@
 package main.java.com.snake.game.entities;
 
-import java.awt.*;
-
 import main.java.com.snake.utils.Constants;
 import main.java.com.snake.utils.Direction;
 import main.java.com.snake.utils.FruitType;

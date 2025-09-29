@@ -15,7 +15,8 @@ public class FruitGenerator {
     private final double PROBABILITY_1 = 0.60;
     private final double PROBABILITY_2 = 0.25;
     private final double PROBABILITY_3 = 0.12;
-    private final double PROBABILITY_4 = 0.03;
+    // reservada para futuras frutas especiales
+    // private final double PROBABILITY_4 = 0.03;
 
     public FruitGenerator() {
         this.random = new Random();

@@ -2,7 +2,6 @@ package main.java.com.snake.game.levels;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.Point;
 
 /**
  * Gestor mejorado de niveles con 4 niveles integrados en la UI
@@ -187,7 +186,6 @@ public class LevelManager {
 
     public boolean setLevel(int levelNumber) {
         if (levelNumber >= 1 && levelNumber <= levels.size()) {
-            Level oldLevel = getCurrentLevel();
             currentLevelId = levelNumber;
             if (observer != null) {
                 observer.onLevelChanged(getCurrentLevel());
