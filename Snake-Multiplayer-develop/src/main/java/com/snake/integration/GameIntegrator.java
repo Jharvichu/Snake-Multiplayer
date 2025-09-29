@@ -47,12 +47,8 @@ public class GameIntegrator {
      * Inicializar todos los componentes del sistema
      */
     public void initializeAllComponents() {
-        System.out.println("[GameIntegrator] Inicializando componentes...");
-
         // El GameEngine ya está inicializado (Singleton)
         // El GameServer se inicializa externamente
-
-        System.out.println("[GameIntegrator] Componentes inicializados");
     }
 
     /**
@@ -60,7 +56,6 @@ public class GameIntegrator {
      */
     public void connectServerToEngine(GameServer server) {
         this.gameServer = server;
-        System.out.println("[GameIntegrator] Servidor conectado al motor del juego");
     }
 
     /**
@@ -83,8 +78,6 @@ public class GameIntegrator {
                 }
             }
         }, 0, 100); // Cada 100ms
-
-        System.out.println("[GameIntegrator] Game loop iniciado");
     }
 
     /**
@@ -121,6 +114,9 @@ public class GameIntegrator {
                 if (gameServer != null) {
                     gameServer.getBroadcaster().broadcastToAll("PLAYER_JOINED:" + playerId);
                 }
+                
+                // Iniciar el juego automáticamente si no está corriendo
+                tryStartGame();
             }
 
             return success;
@@ -206,10 +202,10 @@ public class GameIntegrator {
      * Iniciar juego si hay suficientes jugadores
      */
     public void tryStartGame() {
-        if (playerMapping.size() >= 2) { // Mínimo 2 jugadores
+        if (playerMapping.size() >= 1 && !gameEngine.isRunning()) { // Mínimo 1 jugador
             try {
                 gameEngine.startGame();
-                System.out.println("[GameIntegrator] Juego iniciado con " + playerMapping.size() + " jugadores");
+                System.out.println("[GameIntegrator] Juego iniciado automáticamente con " + playerMapping.size() + " jugador(es)");
             } catch (Exception e) {
                 System.err.println("[GameIntegrator] Error iniciando juego: " + e.getMessage());
             }
@@ -264,6 +260,8 @@ public class GameIntegrator {
 
         System.out.println("[GameIntegrator] Sistema cerrado limpiamente");
     }
+
+
 
     // Getters
     public boolean isRunning() { return isRunning; }
